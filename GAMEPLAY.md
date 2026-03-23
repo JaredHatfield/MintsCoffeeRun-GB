@@ -7,6 +7,7 @@
 3. Selecting a level starts gameplay for that level.
 4. Completing a level should immediately advance to the next level instead of returning to level select.
 5. The player should be able to return to the level select screen later and choose any level that has already been unlocked.
+6. Walking Mint through the goal sprite is how a level is completed.
 
 ## Level select
 
@@ -25,11 +26,12 @@
 - Level unlocks are sequential.
 - Beating level 1 unlocks level 2, beating level 2 unlocks level 3, and so on.
 - After beating a level, gameplay should continue directly into the next level when one exists.
+- The temporary `B` button return to level select has been removed.
 
 ## Current playable stub
 
-- The current implementation includes the title screen, the level select screen, and level 1.
-- Only level 1 can be selected right now.
-- Level 1 is an empty test room that places Mint on screen.
-- Mint can move left and right in level 1.
-- Returning from the test room to the level select screen is currently handled with the `B` button as a temporary development control.
+- Gameplay code is split into per-level source files under `src/levels/`.
+- The current implementation includes the title screen, the level select screen, level 1, and a temporary level 2 placeholder so level completion can advance forward.
+- Level 1 is a simple test course with flat ground, one floating one-tile block, and an easy goal on the right side of the screen.
+- Mint can move left and right and can double jump by pressing `A` twice before landing.
+- Touching the goal completes the level and advances to the next available level.

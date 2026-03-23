@@ -13,11 +13,12 @@ build: sprites
   mkdir -p dist
   xattr -dr com.apple.quarantine "{{gbdk_home}}" 2>/dev/null || true
   test -x "{{lcc}}" || { echo "Missing GBDK SDK at {{gbdk_home}}"; echo "Run: just sdk-install"; echo "Or set GBDK_HOME to an installed GBDK SDK root."; exit 1; }
-  "{{lcc}}" -o "{{rom}}" src/main.c src/sprites/mint_sprite.c src/sprites/mint_title_sprite.c
+  "{{lcc}}" -o "{{rom}}" src/main.c src/levels/*.c src/sprites/mint_sprite.c src/sprites/mint_title_sprite.c src/sprites/goal_sprite.c
 
 sprites:
   python3 scripts/piskel_to_gbdk_sprite.py src/sprites/mint.piskel src/sprites/mint_sprite
   python3 scripts/piskel_to_gbdk_sprite.py src/sprites/mint.piskel src/sprites/mint_title_sprite --scale 3
+  python3 scripts/piskel_to_gbdk_sprite.py src/sprites/goal.piskel src/sprites/goal_sprite
 
 test: build
 
