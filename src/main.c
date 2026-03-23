@@ -12,6 +12,7 @@
 #define LEVEL_ROWS 5u
 #define LEVEL_SELECT_TOP_Y 4u
 #define TITLE_DURATION_FRAMES 120u
+#define CONGRATS_DURATION_FRAMES 90u
 #define LEVEL_TILE_BASE 128u
 #define LEVEL_TILE_COUNT 22u
 #define LEVEL_TILE_BLANK 128u
@@ -22,6 +23,7 @@
 typedef enum screen_state_t {
     SCREEN_TITLE = 0,
     SCREEN_LEVEL_SELECT,
+    SCREEN_CONGRATS,
     SCREEN_LEVEL
 } screen_state_t;
 
@@ -32,6 +34,9 @@ static UINT8 title_timer;
 static UINT8 selected_level;
 static UINT8 unlocked_level_count;
 static UINT8 current_level_index;
+static UINT8 pending_level_index;
+static UINT8 congrats_timer;
+static UINT8 has_pending_level;
 static unsigned char level_select_tiles[LEVEL_TILE_COUNT * 16u];
 
 static const unsigned char digit_masks[10][8] = {
@@ -149,6 +154,20 @@ static void draw_level_select_screen(void) {
     current_screen = SCREEN_LEVEL_SELECT;
 }
 
+static void draw_congratulations_screen(void) {
+    cls();
+    hide_all_sprites();
+    congrats_timer = 0u;
+
+    gotoxy(2, 4);
+    printf("Congratulations");
+
+    set_sprite_data(0u, MINT_TITLE_SPRITE_TILE_COUNT, mint_title_sprite_tiles);
+    mint_title_sprite_show(0u, 0u, 0u, 64u, 88u);
+
+    current_screen = SCREEN_CONGRATS;
+}
+
 static void start_level(UINT8 level_index) {
     const level_definition_t *level_definition = level_get(level_index);
 
@@ -180,12 +199,13 @@ static void complete_current_level(void) {
             unlocked_level_count = (UINT8)(next_level + 1u);
         }
 
-        selected_level = next_level;
-        start_level(next_level);
-        return;
+        pending_level_index = next_level;
+        has_pending_level = 1u;
+    } else {
+        has_pending_level = 0u;
     }
 
-    draw_level_select_screen();
+    draw_congratulations_screen();
 }
 
 static void move_level_selection(INT8 dx, INT8 dy) {
@@ -226,6 +246,24 @@ static void update_level_select_screen(UINT8 pressed) {
     }
 }
 
+static void update_congratulations_screen(void) {
+    if (congrats_timer < CONGRATS_DURATION_FRAMES) {
+        ++congrats_timer;
+    }
+
+    if (congrats_timer < CONGRATS_DURATION_FRAMES) {
+        return;
+    }
+
+    if (has_pending_level != 0u) {
+        selected_level = pending_level_index;
+        start_level(pending_level_index);
+        return;
+    }
+
+    draw_level_select_screen();
+}
+
 static void update_level_screen(UINT8 input, UINT8 pressed) {
     const level_definition_t *level_definition = level_get(current_level_index);
 
@@ -253,6 +291,9 @@ void main(void) {
     unlocked_level_count = 1u;
     selected_level = 0u;
     current_level_index = 0u;
+    pending_level_index = 0u;
+    congrats_timer = 0u;
+    has_pending_level = 0u;
     previous_input = 0u;
 
     draw_title_screen();
@@ -272,6 +313,9 @@ void main(void) {
                 break;
             case SCREEN_LEVEL_SELECT:
                 update_level_select_screen(pressed);
+                break;
+            case SCREEN_CONGRATS:
+                update_congratulations_screen();
                 break;
             case SCREEN_LEVEL:
                 update_level_screen(input, pressed);

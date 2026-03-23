@@ -5,7 +5,7 @@
 1. The ROM opens on the title screen for `Mint's Coffee Run`.
 2. After the title card appears for a few seconds, the game transitions automatically to the level select screen.
 3. Selecting a level starts gameplay for that level.
-4. Completing a level should immediately advance to the next level instead of returning to level select.
+4. Completing a level first shows a `Congratulations` screen and then advances to the next level instead of returning directly to level select.
 5. The player should be able to return to the level select screen later and choose any level that has already been unlocked.
 6. Walking Mint through the goal sprite is how a level is completed.
 
@@ -25,13 +25,15 @@
 
 - Level unlocks are sequential.
 - Beating level 1 unlocks level 2, beating level 2 unlocks level 3, and so on.
-- After beating a level, gameplay should continue directly into the next level when one exists.
+- After beating a level, the game should show a congratulations screen and then continue into the next level when one exists.
 - The temporary `B` button return to level select has been removed.
 
 ## Current playable stub
 
-- Gameplay code is split into per-level source files under `src/levels/`.
+- Gameplay code is split into per-level source files under `src/levels/`, with shared platforming behavior factored into reusable level support code.
 - The current implementation includes the title screen, the level select screen, level 1, and a temporary level 2 placeholder so level completion can advance forward.
 - Level 1 is a simple test course with flat ground, one floating one-tile block, and an easy goal on the right side of the screen.
-- Mint can move left and right and can double jump by pressing `A` twice before landing.
+- Mint uses tuned platforming physics with acceleration, friction, gravity, jump buffering, and coyote time for a more polished platformer feel.
+- Mint's first jump reaches about 2 tiles high, and the double jump reaches about 4 tiles high total when chained well.
 - Touching the goal completes the level and advances to the next available level.
+- After each completed level, the game shows a congratulations screen with the title-screen Mint art before continuing.

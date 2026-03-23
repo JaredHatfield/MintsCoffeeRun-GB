@@ -5,6 +5,7 @@ Purpose: a small Game Boy project built with GBDK-2020 for `Mint's Coffee Run`.
 Key files:
 - `src/main.c` boots the ROM, handles screen flow, and routes into level gameplay.
 - `src/levels/` contains per-level gameplay code, with each implemented level defined in its own source file.
+- `src/levels/platformer_level.c` and `src/levels/platformer_level.h` contain the shared side-view platforming movement and collision logic used by levels.
 - `src/sprites/mint.piskel` is the source of truth for Mint's sprite art.
 - `src/sprites/goal.piskel` is the source of truth for the goal sprite art.
 - `src/sprites/mint_sprite.c` and `src/sprites/mint_sprite.h` are the generated base-size sprite assets.
