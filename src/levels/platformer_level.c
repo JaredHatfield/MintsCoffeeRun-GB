@@ -30,6 +30,12 @@
 #define MAX_FALL_SPEED 56
 #define COYOTE_FRAMES 4u
 #define JUMP_BUFFER_FRAMES 4u
+#define PLAYER_HITBOX_X 3
+#define PLAYER_HITBOX_Y 2
+#define PLAYER_HITBOX_WIDTH 8
+#define PLAYER_HITBOX_HEIGHT 14
+#define PLAYER_FOOT_X 4
+#define PLAYER_FOOT_WIDTH 4
 
 static INT16 player_x;
 static INT16 player_y;
@@ -68,6 +74,22 @@ static INT16 level_player_top(void) {
     return player_y / SUBPIXELS_PER_PIXEL;
 }
 
+static INT16 player_body_left(void) {
+    return level_player_left() + PLAYER_HITBOX_X;
+}
+
+static INT16 player_body_top(void) {
+    return level_player_top() + PLAYER_HITBOX_Y;
+}
+
+static INT16 player_body_bottom(void) {
+    return player_body_top() + PLAYER_HITBOX_HEIGHT;
+}
+
+static INT16 player_foot_left(void) {
+    return level_player_left() + PLAYER_FOOT_X;
+}
+
 static UINT8 ranges_overlap(INT16 a_start, UINT8 a_size, INT16 b_start, UINT8 b_size) {
     return (a_start < (INT16)(b_start + b_size)) && ((INT16)(a_start + a_size) > b_start);
 }
@@ -78,8 +100,8 @@ static UINT8 rects_overlap(INT16 ax, INT16 ay, UINT8 aw, UINT8 ah, INT16 bx, INT
 
 static UINT8 level_is_grounded(const platformer_level_t *level) {
     UINT8 block_index;
-    INT16 player_left = level_player_left();
-    INT16 player_bottom = level_player_top() + MINT_SPRITE_HEIGHT;
+    INT16 foot_left = player_foot_left();
+    INT16 player_bottom = player_body_bottom();
 
     if (player_bottom == level->ground_y) {
         return 1u;
@@ -89,7 +111,7 @@ static UINT8 level_is_grounded(const platformer_level_t *level) {
         const level_rect_t *block = &level->blocks[block_index];
 
         if (player_bottom == block->y &&
-            ranges_overlap(player_left, MINT_SPRITE_WIDTH, block->x, block->width)) {
+            ranges_overlap(foot_left, PLAYER_FOOT_WIDTH, block->x, block->width)) {
             return 1u;
         }
     }
@@ -180,15 +202,16 @@ static void resolve_horizontal_movement(const platformer_level_t *level) {
     for (block_index = 0u; block_index != level->block_count; ++block_index) {
         const level_rect_t *block = &level->blocks[block_index];
 
-        if (!rects_overlap(next_left, player_top, MINT_SPRITE_WIDTH, MINT_SPRITE_HEIGHT,
+        if (!rects_overlap(next_left + PLAYER_HITBOX_X, player_top + PLAYER_HITBOX_Y,
+                           PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT,
                            block->x, block->y, block->width, block->height)) {
             continue;
         }
 
         if (velocity_x > 0) {
-            next_left = block->x - MINT_SPRITE_WIDTH;
+            next_left = block->x - PLAYER_HITBOX_WIDTH - PLAYER_HITBOX_X;
         } else if (velocity_x < 0) {
-            next_left = block->x + block->width;
+            next_left = block->x + block->width - PLAYER_HITBOX_X;
         }
 
         next_x = next_left * SUBPIXELS_PER_PIXEL;
@@ -200,11 +223,12 @@ static void resolve_horizontal_movement(const platformer_level_t *level) {
 
 static void resolve_vertical_movement(const platformer_level_t *level) {
     UINT8 block_index;
-    INT16 current_top = level_player_top();
-    INT16 current_bottom = current_top + MINT_SPRITE_HEIGHT;
+    INT16 current_top = player_body_top();
+    INT16 current_bottom = current_top + PLAYER_HITBOX_HEIGHT;
     INT16 next_y = player_y + velocity_y;
-    INT16 next_top = next_y / SUBPIXELS_PER_PIXEL;
-    INT16 next_bottom = next_top + MINT_SPRITE_HEIGHT;
+    INT16 next_sprite_top = next_y / SUBPIXELS_PER_PIXEL;
+    INT16 next_top = next_sprite_top + PLAYER_HITBOX_Y;
+    INT16 next_bottom = next_top + PLAYER_HITBOX_HEIGHT;
 
     if (velocity_y > 0) {
         for (block_index = 0u; block_index != level->block_count; ++block_index) {
@@ -212,18 +236,19 @@ static void resolve_vertical_movement(const platformer_level_t *level) {
 
             if (current_bottom <= block->y &&
                 next_bottom >= block->y &&
-                ranges_overlap(level_player_left(), MINT_SPRITE_WIDTH, block->x, block->width)) {
-                next_top = block->y - MINT_SPRITE_HEIGHT;
-                next_y = next_top * SUBPIXELS_PER_PIXEL;
+                ranges_overlap(player_foot_left(), PLAYER_FOOT_WIDTH, block->x, block->width)) {
+                next_sprite_top = block->y - PLAYER_HITBOX_HEIGHT - PLAYER_HITBOX_Y;
+                next_y = next_sprite_top * SUBPIXELS_PER_PIXEL;
                 velocity_y = 0;
+                next_top = block->y - PLAYER_HITBOX_HEIGHT;
                 next_bottom = block->y;
                 break;
             }
         }
 
         if (next_bottom >= level->ground_y) {
-            next_top = level->ground_y - MINT_SPRITE_HEIGHT;
-            next_y = next_top * SUBPIXELS_PER_PIXEL;
+            next_sprite_top = level->ground_y - PLAYER_HITBOX_HEIGHT - PLAYER_HITBOX_Y;
+            next_y = next_sprite_top * SUBPIXELS_PER_PIXEL;
             velocity_y = 0;
         }
     } else if (velocity_y < 0) {
@@ -233,9 +258,9 @@ static void resolve_vertical_movement(const platformer_level_t *level) {
 
             if (current_top >= block_bottom &&
                 next_top <= block_bottom &&
-                ranges_overlap(level_player_left(), MINT_SPRITE_WIDTH, block->x, block->width)) {
-                next_top = block_bottom;
-                next_y = next_top * SUBPIXELS_PER_PIXEL;
+                ranges_overlap(player_body_left(), PLAYER_HITBOX_WIDTH, block->x, block->width)) {
+                next_sprite_top = block_bottom - PLAYER_HITBOX_Y;
+                next_y = next_sprite_top * SUBPIXELS_PER_PIXEL;
                 velocity_y = 0;
                 break;
             }
@@ -312,7 +337,7 @@ level_event_t platformer_update(const platformer_level_t *level, UINT8 input, UI
     resolve_vertical_movement(level);
     draw_level_entities(level);
 
-    if (rects_overlap(level_player_left(), level_player_top(), MINT_SPRITE_WIDTH, MINT_SPRITE_HEIGHT,
+    if (rects_overlap(player_body_left(), player_body_top(), PLAYER_HITBOX_WIDTH, PLAYER_HITBOX_HEIGHT,
                       level->goal.x, level->goal.y, level->goal.width, level->goal.height)) {
         return LEVEL_EVENT_COMPLETE;
     }

@@ -35,5 +35,6 @@
 - Level 1 is a simple test course with flat ground, one floating one-tile block, and an easy goal on the right side of the screen.
 - Mint uses tuned platforming physics with acceleration, friction, gravity, jump buffering, and coyote time for a more polished platformer feel.
 - Mint's first jump reaches about 2 tiles high, and the double jump reaches about 4 tiles high total when chained well.
+- Mint's body collision and foot support should match the visible sprite better, so standing on blocks feels grounded and Mint falls off edges naturally.
 - Touching the goal completes the level and advances to the next available level.
 - After each completed level, the game shows a congratulations screen with the title-screen Mint art before continuing.
